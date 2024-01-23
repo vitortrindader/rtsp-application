@@ -1,9 +1,8 @@
-import streamlit as st
 import cv2
 import subprocess
 
 
-def create_interface(st_frame, frame, ecg_data, prediction):
+def create_interface(frame, ecg_data, prediction):
 
     number_1 = ecg_data[-1] if ecg_data else 0
     number_1 = round(number_1, 4)
@@ -19,7 +18,6 @@ def create_interface(st_frame, frame, ecg_data, prediction):
     elif number_2 == 4:
         number_2 = "Unknown"
 
-    # Logic to show prediction
     overlay = frame.copy()
     cv2.rectangle(overlay, (22, 22), (350, 100), (0, 0, 0), thickness=cv2.FILLED)
     cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
@@ -29,26 +27,25 @@ def create_interface(st_frame, frame, ecg_data, prediction):
     cv2.putText(frame, str(number_2), (110, 80), font, 1 * 0.7, (81, 249, 249), 1)
     cv2.putText(frame, "PREDICTION", (25, 80), font, 1 * 0.4, (81, 249, 249), 1)  # Prediction
 
-    st_frame.image(frame,caption='inteface',channels="BGR",use_column_width=True)
     return frame
 
 
 def play_rtsp_stream_modified(prediction, ecg_data):
-    source_rtsp = st.sidebar.text_input("rtsp stream url:")
-    st.sidebar.caption('Example URL: rtsp://admin:12345@192.168.1.210:554/Streaming/Channels/101')
-    
-    rtsp_output_url = st.sidebar.text_input("rtsp output url:")
-    st.sidebar.caption('Example URL: rtsp://your_server_ip:554/live/stream')
+    source_rtsp = "rtsp://localhost:8554/mystream"
+    rtsp_output_url = "rtsp://localhost:9554/mystream"
 
-    if st.sidebar.button('PLAY'):
+    trigger = True
+
+    if trigger:
         try:
             vid_cap = cv2.VideoCapture(source_rtsp)
-            st_frame = st.empty()
             width, height = 640, 480
             fps = 60
             vid_cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
             vid_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
             vid_cap.set(cv2.CAP_PROP_FPS, fps)
+
+
             ffmpeg_cmd = [
                 "ffmpeg",
                 "-f", "rawvideo",
@@ -70,7 +67,7 @@ def play_rtsp_stream_modified(prediction, ecg_data):
                 success, imagem = vid_cap.read()
                 image = cv2.resize(imagem, (640, 480))
                 if success:
-                    frame = create_interface(st_frame, image, ecg_data, prediction)
+                    frame = create_interface(image, ecg_data, prediction)
                     ffmpeg_process.stdin.write(frame.tobytes())
                 else:
                     break
@@ -81,5 +78,4 @@ def play_rtsp_stream_modified(prediction, ecg_data):
 
         except Exception as e:
             vid_cap.release()
-            st.sidebar.error("Error loading RTSP stream: " + str(e))
 
