@@ -1,5 +1,4 @@
 import paho.mqtt.client as mqtt
-import streamlit as st
 import settings
 import helper
 from keras.models import load_model
@@ -53,20 +52,7 @@ topic = "ambulance/ecg"
 
 client.subscribe(topic)
 
-
-st.set_page_config(
-    page_title="Ambulance Monitoring",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-st.title("Ambulance Monitoring")
-
 source_radio = 'RTSP'
 
 if source_radio == settings.RTSP:
-    helper.play_rtsp_stream_modified(prediction,ecg_data)
-
-else:
-    st.error("Please select a valid source type!")
+    helper.play_rtsp_stream_modified(prediction, ecg_data)
